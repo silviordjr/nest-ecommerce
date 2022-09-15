@@ -1,4 +1,7 @@
 import { DataSource } from 'typeorm';
+import { ConfigModule } from '@nestjs/config';
+
+ConfigModule.forRoot();
 
 export const devDataSource = new DataSource({
   type: 'mysql',

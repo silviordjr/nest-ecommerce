@@ -28,6 +28,11 @@ export class crateProductsTable1663251428873 implements MigrationInterface {
             name: 'price',
             type: 'float',
           },
+          {
+            name: 'ownerId',
+            type: 'varchar',
+            length: '255',
+          },
         ],
       }),
     );

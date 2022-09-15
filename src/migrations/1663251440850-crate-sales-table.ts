@@ -19,6 +19,16 @@ export class crateSalesTable1663251440850 implements MigrationInterface {
             isGenerated: true,
             generationStrategy: 'uuid',
           },
+          {
+            name: 'userId',
+            type: 'varchar',
+            length: '255',
+          },
+          {
+            name: 'productId',
+            type: 'varchar',
+            length: '255',
+          },
         ],
       }),
       true,

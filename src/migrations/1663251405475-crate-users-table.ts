@@ -35,7 +35,7 @@ export class crateUsersTable1663251405475 implements MigrationInterface {
             name: 'role',
             type: 'enum',
             enum: ['admin', 'user'],
-            default: 'user',
+            default: '"user"',
           },
         ],
       }),
