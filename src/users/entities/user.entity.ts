@@ -16,5 +16,10 @@ export class User {
   @Column()
   password: string;
   @Column()
-  role: Role;
+  role?: Role;
 }
+
+export type authenticationData = {
+  id: string;
+  role: Role;
+};
