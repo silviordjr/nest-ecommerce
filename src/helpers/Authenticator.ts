@@ -19,9 +19,9 @@ export class Authenticator {
 
       return {
         id: tokenData.id,
+        role: tokenData.role,
       };
     } catch (error) {
-      console.log(error);
       return null;
     }
   };

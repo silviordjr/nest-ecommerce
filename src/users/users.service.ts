@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { HashManager } from './../helpers/HashManager';
 import IdGenerator from './../helpers/IdGenerator';
 import { Authenticator } from './../helpers/Authenticator';
+import CustomError from './../exceptions/CustomError';
 
 @Injectable()
 export class UsersService {
@@ -15,11 +16,22 @@ export class UsersService {
     private userRepo: Repository<User>,
   ) {}
 
-  create(createUserDto: CreateUserDto) {
+  create(createUserDto: CreateUserDto, authorization: string) {
+    const tokenData = new Authenticator().getTokenData(authorization);
     const hashedPass = new HashManager().createHash(createUserDto.password);
+
     createUserDto.password = hashedPass;
     createUserDto.id = new IdGenerator().generateId();
+
     const user = this.userRepo.create(createUserDto);
+
+    if (user.role === 'admin' && (!tokenData || tokenData.role !== 'admin')) {
+      throw new CustomError(
+        HttpStatus.FORBIDDEN,
+        'Sem autorização para criação de usuário admin.',
+      );
+    }
+
     return this.userRepo.save(user);
   }
 
@@ -27,19 +39,27 @@ export class UsersService {
     const tokenData = new Authenticator().getTokenData(authorization);
 
     if (!tokenData) {
-      throw new Error('Token Inválido.');
+      throw new CustomError(HttpStatus.UNAUTHORIZED, 'Token Inválido.');
     }
 
     return this.userRepo.find();
   }
 
-  findOne(id: number, authorization: string) {
+  findOne(id: string, authorization: string) {
     const tokenData = new Authenticator().getTokenData(authorization);
 
     if (!tokenData) {
-      throw new Error('Token Inválido.');
+      throw new CustomError(HttpStatus.UNAUTHORIZED, 'Token Inválido.');
     }
-    return `This action returns a #${id} user`;
+
+    if (tokenData.id !== id && tokenData.role !== 'admin') {
+      throw new CustomError(HttpStatus.FORBIDDEN, 'Sem autorização.');
+    }
+    return this.userRepo.find({
+      where: {
+        id: id,
+      },
+    });
   }
 
   async update(updateUserDto: UpdateUserDto) {
@@ -50,7 +70,10 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new Error('Insira email e senha válidos!');
+      throw new CustomError(
+        HttpStatus.NOT_FOUND,
+        'Insira email e senha válidos!',
+      );
     }
 
     const passwordIsCorrect = new HashManager().compareHash(
@@ -59,7 +82,10 @@ export class UsersService {
     );
 
     if (!passwordIsCorrect) {
-      throw new Error('Insira email e senha válidos!');
+      throw new CustomError(
+        HttpStatus.NOT_FOUND,
+        'Insira email e senha válidos!',
+      );
     }
 
     const token = new Authenticator().generateToken({
@@ -70,7 +96,19 @@ export class UsersService {
     return { token: token };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string, authorization: string) {
+    const tokenData = new Authenticator().getTokenData(authorization);
+
+    if (!tokenData) {
+      throw new CustomError(HttpStatus.UNAUTHORIZED, 'Token Inválido.');
+    }
+
+    if (tokenData.id !== id && tokenData.role !== 'admin') {
+      throw new CustomError(HttpStatus.FORBIDDEN, 'Sem autorização.');
+    }
+
+    await this.userRepo.delete(id);
+
+    return { message: 'OK.' };
   }
 }
