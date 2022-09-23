@@ -1,33 +1,77 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Headers,
+  UseFilters,
+  HttpException,
+  Query,
+} from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { HttpExceptionFilter } from './../exceptions/http-exception.filter';
 
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  @UseFilters(HttpExceptionFilter)
+  create(
+    @Body() createProductDto: CreateProductDto,
+    @Headers('authorization') authorization: string,
+  ) {
+    try {
+      return this.productsService.create(createProductDto, authorization);
+    } catch (error) {
+      throw new HttpException(error.message, error.status);
+    }
   }
 
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  @UseFilters(HttpExceptionFilter)
+  findAll(@Query('page') page: number) {
+    try {
+      if (!page) {
+        page = 1;
+      }
+      return this.productsService.findAll(page);
+    } catch (error) {
+      throw new HttpException(error.message, error.status);
+    }
   }
 
   @Get(':id')
+  @UseFilters(HttpExceptionFilter)
   findOne(@Param('id') id: string) {
-    return this.productsService.findOne(+id);
+    try {
+      return this.productsService.findOne(id);
+    } catch (error) {
+      throw new HttpException(error.message, error.status);
+    }
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productsService.update(+id, updateProductDto);
+  @UseFilters(HttpExceptionFilter)
+  update(
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateProductDto,
+    @Headers('authorization') authorization: string,
+  ) {
+    try {
+      return this.productsService.update(id, updateProductDto, authorization);
+    } catch (error) {
+      throw new HttpException(error.message, error.status);
+    }
   }
 
   @Delete(':id')
+  @UseFilters(HttpExceptionFilter)
   remove(@Param('id') id: string) {
     return this.productsService.remove(+id);
   }
