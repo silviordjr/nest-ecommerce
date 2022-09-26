@@ -7,7 +7,7 @@ export class Product {
   @Column()
   name: string;
   @Column()
-  price: string;
+  price: number;
   @Column()
   ownerId: string;
 }
