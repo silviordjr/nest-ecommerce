@@ -9,6 +9,7 @@ import {
   Headers,
   UseFilters,
   HttpException,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -44,12 +45,17 @@ export class UsersController {
 
   @Get(':id')
   @UseFilters(HttpExceptionFilter)
-  findOne(
+  async findOne(
     @Param('id') id: string,
     @Headers('authorization') authorization: string,
+    @Query('page') page: number,
   ) {
     try {
-      return this.usersService.findOne(id, authorization);
+      if (!page) {
+        page = 1;
+      }
+      const userData = await this.usersService.findOne(id, authorization, page);
+      return userData;
     } catch (error) {
       throw new HttpException(error.message, error.status);
     }

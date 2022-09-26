@@ -45,7 +45,7 @@ export class UsersService {
     return this.userRepo.find();
   }
 
-  findOne(id: string, authorization: string) {
+  async findOne(id: string, authorization: string, page: number) {
     const tokenData = new Authenticator().getTokenData(authorization);
 
     if (!tokenData) {
@@ -55,11 +55,21 @@ export class UsersService {
     if (tokenData.id !== id && tokenData.role !== 'admin') {
       throw new CustomError(HttpStatus.FORBIDDEN, 'Sem autorização.');
     }
-    return this.userRepo.find({
+
+    const offset = 10 * (page - 1);
+
+    const query = `select products.id as id, products.name as name, products.price as price, products.ownerId as ownerId, users.name as owner from products inner join users on products.ownerId  = users.id where users.id = '${id}' limit 10  offset ${offset};`;
+    const products = await this.userRepo.query(query);
+    const productsObj = { products: products, page: page };
+    const user = await this.userRepo.find({
       where: {
         id: id,
       },
     });
+
+    const userData = { user: user, products: productsObj };
+
+    return userData;
   }
 
   async update(updateUserDto: UpdateUserDto) {
