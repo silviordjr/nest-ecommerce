@@ -35,12 +35,15 @@ export class ProductsController {
 
   @Get()
   @UseFilters(HttpExceptionFilter)
-  findAll(@Query('page') page: number) {
+  async findAll(@Query('page') page: number) {
     try {
       if (!page) {
         page = 1;
       }
-      return this.productsService.findAll(page);
+
+      const products = await this.productsService.findAll(page);
+
+      return products;
     } catch (error) {
       throw new HttpException(error.message, error.status);
     }
@@ -48,9 +51,11 @@ export class ProductsController {
 
   @Get(':id')
   @UseFilters(HttpExceptionFilter)
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     try {
-      return this.productsService.findOne(id);
+      const product = await this.productsService.findOne(id);
+
+      return product;
     } catch (error) {
       throw new HttpException(error.message, error.status);
     }
@@ -58,13 +63,19 @@ export class ProductsController {
 
   @Patch(':id')
   @UseFilters(HttpExceptionFilter)
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
     @Headers('authorization') authorization: string,
   ) {
     try {
-      return this.productsService.update(id, updateProductDto, authorization);
+      const product = await this.productsService.update(
+        id,
+        updateProductDto,
+        authorization,
+      );
+
+      return product;
     } catch (error) {
       throw new HttpException(error.message, error.status);
     }
@@ -72,7 +83,15 @@ export class ProductsController {
 
   @Delete(':id')
   @UseFilters(HttpExceptionFilter)
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(+id);
+  async remove(
+    @Param('id') id: string,
+    @Headers('authorization') authorization: string,
+  ) {
+    try {
+      const product = await this.productsService.remove(id, authorization);
+      return product;
+    } catch (error) {
+      throw new HttpException(error.message, error.status);
+    }
   }
 }

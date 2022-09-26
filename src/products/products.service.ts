@@ -88,7 +88,25 @@ export class ProductsService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  async remove(id: string, authorization: string) {
+    const tokenData = new Authenticator().getTokenData(authorization);
+
+    if (!tokenData) {
+      throw new CustomError(HttpStatus.UNAUTHORIZED, 'Token Inválido.');
+    }
+
+    const product = await this.productRepo.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (tokenData.id !== product.ownerId && tokenData.role !== 'admin') {
+      throw new CustomError(HttpStatus.FORBIDDEN, 'Sem autorização.');
+    }
+
+    await this.productRepo.delete(id);
+
+    return { message: 'Ok.' };
   }
 }
