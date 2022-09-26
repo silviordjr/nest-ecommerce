@@ -35,14 +35,21 @@ export class SalesController {
 
   @Get()
   @UseFilters(HttpExceptionFilter)
-  findAll() {
-    return this.salesService.findAll();
+  findAll(@Headers('authorization') authorization: string) {
+    try {
+      return this.salesService.findAll(authorization);
+    } catch (error) {
+      throw new HttpException(error.message, error.status);
+    }
   }
 
   @Get(':id')
   @UseFilters(HttpExceptionFilter)
-  findOne(@Param('id') id: string) {
-    return this.salesService.findOne(+id);
+  findOne(
+    @Param('id') id: string,
+    @Headers('authorization') authorization: string,
+  ) {
+    return this.salesService.findOne(id, authorization);
   }
 
   @Patch(':id')
